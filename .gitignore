@@ -3,3 +3,7 @@ node_modules/
 .DS_Store
 bruno
 /src/generated/prisma
+# User-uploaded files
+public/uploads/*
+!public/uploads/.gitkeep
+

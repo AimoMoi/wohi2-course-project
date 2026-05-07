@@ -3,8 +3,10 @@ const prisma = require("./lib/prisma");
 const app = express();
 const authRouter = require("./routes/auth");
 const questionsRouter = require("./routes/questions");
-
+const path = require('path');
 const PORT = process.env.PORT || 3000;
+
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Middleware to parse JSON bodies (will be useful in later steps)
 app.use(express.json());
