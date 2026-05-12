@@ -22,10 +22,20 @@ const seedQuestions = [
     question: "What do databases do?",
     answer: "Databases store and collect data.",
     keywords: ["database", "data"]
+  },
+{
+    question: "What is the population of Finland?",
+    answer: "5.5 million.",
+    keywords: ["finland", "population"]
   }
 ];
 
 async function main() {
+  
+  await prisma.attempt.deleteMany();
+  await prisma.question.deleteMany();
+  await prisma.keyword.deleteMany();
+  await prisma.user.deleteMany();
 
   // Create a default user
   const hashedPassword = await bcrypt.hash("1234", 10);
@@ -38,9 +48,6 @@ async function main() {
   });
 
   console.log("Created user:", user.email);
-  
-  await prisma.question.deleteMany();
-  await prisma.keyword.deleteMany();
 
   for (const q of seedQuestions) {
     await prisma.question.create({

@@ -6,4 +6,4 @@ bruno
 # User-uploaded files
 public/uploads/*
 !public/uploads/.gitkeep
-
+.env.test
