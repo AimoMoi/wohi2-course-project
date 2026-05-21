@@ -5,7 +5,7 @@
 
 */
 -- DropTable
-DROP TABLE `question`;
+DROP TABLE IF EXISTS `question`;
 
 -- CreateTable
 CREATE TABLE `questions` (
