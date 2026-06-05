@@ -6,7 +6,7 @@ const prisma = require("../lib/prisma");
 const SECRET = process.env.JWT_SECRET;
 const crypto = require("crypto");
 const { ValidationError, ConflictError, UnauthorizedError } = require("../lib/errors");
-const { sendVerificationEmail } = require("../services/email");
+const { sendVerificationEmail } = require("../services/email.cjs");
 
 // POST /api/auth/register
 router.post("/register", async (req, res) => {
