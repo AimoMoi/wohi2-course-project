@@ -4,8 +4,9 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const prisma = require("../lib/prisma");
 const SECRET = process.env.JWT_SECRET;
-const { ValidationError, ConflictError, UnauthorizedError }
-  = require("../lib/errors");
+const crypto = require("crypto");
+const { ValidationError, ConflictError, UnauthorizedError } = require("../lib/errors");
+const { sendVerificationEmail } = require("../services/email");
 
 // POST /api/auth/register
 router.post("/register", async (req, res) => {
@@ -25,10 +26,16 @@ router.post("/register", async (req, res) => {
   // Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // Create a verification token for email verification
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+
   // Create the user
   const user = await prisma.user.create({
-    data: { email, password: hashedPassword, name },
+    data: { email, password: hashedPassword, name, 
+      emailVerified: false, verificationToken }
   });
+
+  await sendVerificationEmail(email, verificationToken);
 
   // Generate a token
   const token = jwt.sign({ userId: user.id }, SECRET, { expiresIn: "1h" });
@@ -63,12 +70,34 @@ router.post("/login", async (req, res) => {
     throw new UnauthorizedError("Invalid credentials");
   }
 
+  // Check if email is verified
+  if (!user.emailVerified) {
+    throw new UnauthorizedError("Email not verified");
+  }
+
   // Generate a token
   const token = jwt.sign({ userId: user.id }, SECRET, { expiresIn: "1h" });
 
   res.json({ token });
 });
 
+router.get("/verify-email", async (req, res) => {
+  const { token } = req.query;
 
+  const user = await prisma.user.findUnique({
+    where: { verificationToken: token },
+  });
+
+  if (!user) {
+    throw new UnauthorizedError("Invalid verification token");
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { emailVerified: true, verificationToken: null },
+  });
+
+  res.json({ message: "Email verified" });
+});
 
 module.exports = router;
