@@ -81,6 +81,46 @@ router.post("/login", async (req, res) => {
   res.json({ token });
 });
 
+// POST /api/auth/resend-verification
+router.post("/resend-verification", async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ValidationError("email is required");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  // Security: do not reveal whether the email exists
+  if (!user) {
+    return res.json({
+      message: "If the account exists, a verification email has been sent.",
+    });
+  }
+
+  if (user.emailVerified) {
+    return res.json({
+      message: "Email is already verified.",
+    });
+  }
+
+  const verificationToken =
+    crypto.randomBytes(32).toString("hex");
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { verificationToken },
+  });
+
+  await sendVerificationEmail(email, verificationToken);
+
+  res.json({
+    message: "Verification email sent.",
+  });
+});
+
 router.get("/verify-email", async (req, res) => {
   const { token } = req.query;
 
