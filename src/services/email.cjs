@@ -1,8 +1,8 @@
-import { Resend } from "resend"
+const { Resend } = require("resend")
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-export async function sendVerificationEmail(email, token) {
+async function sendVerificationEmail(email, token) {
   const verifyUrl =
     `${process.env.BASE_URL}/verify-email?token=${token}`
 
@@ -10,8 +10,8 @@ export async function sendVerificationEmail(email, token) {
     from: "onboarding@resend.dev",
     to: email,
     subject: "Verify your email",
-    html: `<h2>Verify your email</h2><a href="${verifyUrl}">Verify Email</a>`
+    html: `<h2>Verify your email</h2><a href="${verifyUrl}">Verify Email</a>`,
   })
 }
 
-module.exports = { sendVerificationEmail };
+module.exports = { sendVerificationEmail }
