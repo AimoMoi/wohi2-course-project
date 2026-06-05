@@ -7,16 +7,41 @@ const SECRET = process.env.JWT_SECRET;
 const crypto = require("crypto");
 const { ValidationError, ConflictError, UnauthorizedError } = require("../lib/errors");
 const { sendVerificationEmail } = require("../services/email.cjs");
+const axios = require("axios");
 
 // POST /api/auth/register
 router.post("/register", async (req, res) => {
-  const { email, password, name } = req.body;
+  const { email, password, name, captchaToken } = req.body;
 
   if (!email || !password || !name) {
     throw new ValidationError("email, password and name are required");
   }
 
-  // Check if user already exists
+    // Verify captcha
+  if (!captchaToken) {
+    throw new ValidationError("Captcha token is required");
+  }
+
+  try {
+    const recaptchaResponse = await axios.post(
+      "https://www.google.com/recaptcha/api/siteverify",
+      null,
+      {
+        params: {
+          secret: process.env.RECAPTCHA_SECRET_KEY,
+          response: captchaToken,
+        },
+      }
+    );
+
+    if (!recaptchaResponse.data.success) {
+      throw new ValidationError("Captcha verification failed");
+    }
+  } catch (error) {
+    if (error instanceof ValidationError) throw error;
+    throw new ValidationError("Captcha verification failed: " + error.message);
+  }
+  
   const existingUser = await prisma.user.findUnique({ where: { email }, });
 
   if (existingUser) {
@@ -33,7 +58,8 @@ router.post("/register", async (req, res) => {
   const user = await prisma.user.create({
     data: {
       email, password: hashedPassword, name,
-      emailVerified: false, verificationToken
+      emailVerified: process.env.NODE_ENV === "development" ? true : false,
+      verificationToken
     }
   });
 
@@ -68,7 +94,7 @@ router.post("/login", async (req, res) => {
     throw new UnauthorizedError("Invalid credentials");
   }
 
-  // Check if email is verified
+  // Check if email is verified 
   if (!user.emailVerified) {
     throw new UnauthorizedError("Email not verified");
   }

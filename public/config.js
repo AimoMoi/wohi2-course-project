@@ -12,6 +12,7 @@ const CONFIG = {
   },
   QUESTIONS_PER_PAGE: 5,
   STORAGE_KEY: "jwt_token",
+  RECAPTCHA_SITE_KEY: "6LfN1w4tAAAAAF7QLmqY7tQF-kwk55Jse6DbOwWz",
   API_FIELDS: {
     SOLVED: "solved",
   },
