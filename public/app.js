@@ -68,7 +68,7 @@ function renderAuthForm() {
       .join("")}
       ${isRegisterMode ? `
         <div class="form-group">
-          <div class="g-recaptcha" data-sitekey="${CONFIG.RECAPTCHA_SITE_KEY}"></div>
+          <div id="g-recaptcha" data-sitekey="${CONFIG.RECAPTCHA_SITE_KEY}"></div>
         </div>` : ''}
       <button type="submit">${title}</button>
     </form>
@@ -83,6 +83,13 @@ function renderAuthForm() {
     isRegisterMode = !isRegisterMode;
     renderAuthForm();
   });
+
+  // Render reCAPTCHA for registration form
+  if (isRegisterMode) {
+    grecaptcha.render("g-recaptcha", {
+      sitekey: CONFIG.RECAPTCHA_SITE_KEY
+    });
+  }
 }
 
 async function handleAuth(e) {
