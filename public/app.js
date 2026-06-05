@@ -33,7 +33,7 @@ async function apiFetch(route, options = {}) {
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const res = await fetch(`${CONFIG.API_URL}${route}`, { ...options, headers });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || data.msg || "Request failed");
+  if (!res.ok) throw new Error(data.message || data.error || data.msg || "Request failed");
   return data;
 }
 
@@ -99,6 +99,12 @@ async function handleAuth(e) {
       method: "POST",
       body: JSON.stringify(body),
     });
+
+     if (isRegisterMode) {
+      errorEl.textContent = data.message || "Registration successful. Please verify your email.";
+      return;
+    }
+
     setToken(data.token);
     showApp();
   } catch (err) {

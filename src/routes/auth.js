@@ -17,7 +17,7 @@ router.post("/register", async (req, res) => {
   }
 
   // Check if user already exists
-  const existingUser = await prisma.user.findUnique({ where: { email },});
+  const existingUser = await prisma.user.findUnique({ where: { email }, });
 
   if (existingUser) {
     throw new ConflictError("Email already registered");
@@ -31,18 +31,16 @@ router.post("/register", async (req, res) => {
 
   // Create the user
   const user = await prisma.user.create({
-    data: { email, password: hashedPassword, name, 
-      emailVerified: false, verificationToken }
+    data: {
+      email, password: hashedPassword, name,
+      emailVerified: false, verificationToken
+    }
   });
 
   await sendVerificationEmail(email, verificationToken);
 
-  // Generate a token
-  const token = jwt.sign({ userId: user.id }, SECRET, { expiresIn: "1h" });
-
   res.status(201).json({
-    message: "User registered successfully",
-    token,
+    message: "User registered successfully. Please verify your email.",
   });
 });
 
