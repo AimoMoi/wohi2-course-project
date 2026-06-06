@@ -52,6 +52,41 @@ function formatQuestion(question) {
 
 router.use(authenticate);
 
+router.get("/random/list", async (req, res) => {
+  const count = Math.min(Math.max(1, parseInt(req.query.count) || 10), 50);
+
+  const randomRows = await prisma.$queryRaw`
+    SELECT id FROM questions
+    ORDER BY RAND()
+    LIMIT ${count}
+  `;
+
+  const randomIds = randomRows.map((row) => row.id);
+  
+  const questions = await prisma.question.findMany({
+    where: {
+      id: { in: randomIds },
+    },
+    include: {
+      keywords: true,
+      user: true,
+      attempts: {
+        where: { userId: req.user.userId, correct: true },
+        take: 1,
+      },
+      _count: { select: { attempts: true } },
+    },
+  });
+    
+  const questionById = new Map(questions.map((q) => [q.id, q]));
+  const orderedQuestions = randomIds.map((id) => questionById.get(id)).filter(Boolean);
+
+  res.json({
+    data: orderedQuestions.map(formatQuestion),
+    count: orderedQuestions.length,
+  });
+});
+
 router.get("/", async (req, res) => {
   const { keyword } = req.query;
   const page = Math.max(1, parseInt(req.query.page) || 1);

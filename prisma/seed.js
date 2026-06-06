@@ -27,7 +27,128 @@ const seedQuestions = [
     question: "What is the population of Finland?",
     answer: "5.5 million.",
     keywords: ["finland", "population"]
-  }
+  },
+   {
+    question: "What is the capital of Finland?",
+    answer: "Helsinki",
+    keywords: ["geography", "finland"]
+  },
+  {
+    question: "What is the capital of Sweden?",
+    answer: "Stockholm",
+    keywords: ["geography", "sweden"]
+  },
+  {
+    question: "What is the capital of France?",
+    answer: "Paris",
+    keywords: ["geography", "france"]
+  },
+  {
+    question: "What is the largest planet in the Solar System?",
+    answer: "Jupiter",
+    keywords: ["science", "space"]
+  },
+  {
+    question: "Which planet is known as the Red Planet?",
+    answer: "Mars",
+    keywords: ["science", "space"]
+  },
+  {
+    question: "What is the chemical symbol for water?",
+    answer: "H2O",
+    keywords: ["science", "chemistry"]
+  },
+  {
+    question: "What is the boiling point of water in Celsius?",
+    answer: "100",
+    keywords: ["science", "chemistry"]
+  },
+  {
+    question: "What is the square root of 64?",
+    answer: "8",
+    keywords: ["math"]
+  },
+  {
+    question: "What is 12 × 12?",
+    answer: "144",
+    keywords: ["math"]
+  },
+  {
+    question: "What is 25 + 17?",
+    answer: "42",
+    keywords: ["math"]
+  },
+  {
+    question: "Who painted the Mona Lisa?",
+    answer: "Leonardo da Vinci",
+    keywords: ["art", "history"]
+  },
+  {
+    question: "Who wrote Hamlet?",
+    answer: "William Shakespeare",
+    keywords: ["literature"]
+  },
+  {
+    question: "In which country are the pyramids of Giza located?",
+    answer: "Egypt",
+    keywords: ["history", "geography"]
+  },
+  {
+    question: "What is the longest river in the world?",
+    answer: "Nile",
+    keywords: ["geography"]
+  },
+  {
+    question: "What is the largest ocean on Earth?",
+    answer: "Pacific Ocean",
+    keywords: ["geography"]
+  },
+  {
+    question: "What language is spoken in Brazil?",
+    answer: "Portuguese",
+    keywords: ["language", "geography"]
+  },
+  {
+    question: "What currency is used in Japan?",
+    answer: "Yen",
+    keywords: ["economics", "japan"]
+  },
+  {
+    question: "What is the fastest land animal?",
+    answer: "Cheetah",
+    keywords: ["animals"]
+  },
+  {
+    question: "What is the largest mammal?",
+    answer: "Blue Whale",
+    keywords: ["animals"]
+  },
+  {
+    question: "How many continents are there?",
+    answer: "7",
+    keywords: ["geography"]
+  },
+  {
+    question: "What is the smallest prime number?",
+    answer: "2",
+    keywords: ["math"]
+  },
+  {
+    question: "Which continent is Finland located in?",
+    answer: "Europe",
+    keywords: ["geography", "finland"]
+  },
+  {
+    question: "Who developed the theory of relativity?",
+    answer: "Albert Einstein",
+    keywords: ["science", "physics"]
+  },
+  {
+    question: "What is the capital of Germany?",
+    answer: "Berlin",
+    keywords: ["geography", "germany"]
+  },
+  
 ];
 
 async function main() {
@@ -44,6 +165,7 @@ async function main() {
       email: "admin@example.com",
       password: hashedPassword,
       name: "Admin User",
+      emailVerified: true
     },
   });
 

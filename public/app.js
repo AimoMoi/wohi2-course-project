@@ -141,6 +141,133 @@ async function showApp() {
   await loadQuestions();
 }
 
+function displayQuestions(questions, options = {}) {
+  const container = document.getElementById("questions-container");
+  const currentUserId = getCurrentUserId();
+  const {
+    total = questions.length,
+    totalPages = 1,
+    page = 1,
+    keyword = "",
+    showPagination = false,
+    showBackToAll = false,
+  } = options;
+
+  const solvedCount = questions.filter((q) => q[CONFIG.API_FIELDS.SOLVED]).length;
+
+  let html = `
+    <div class="score-bar">
+      <div class="score-item">
+        <div class="score-value">${total}</div>
+        <div class="score-label">Questions</div>
+      </div>
+      <div class="score-item">
+        <div class="score-value">${solvedCount}/${questions.length}</div>
+        <div class="score-label">Solved (this page)</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-primary" id="new-question-btn">+ New Question</button>
+      ${showBackToAll
+        ? `<button class="btn btn-primary" id="back-to-all-btn">All Questions</button>`
+        : `<button class="btn btn-primary" id="random-btn">Random Questions</button>`
+      }
+      <div class="search-bar">
+        <input type="text" id="keyword-input" placeholder="Search by keyword..." value="${keyword}" />
+        <button class="btn btn-search" id="search-btn">Search</button>
+        ${keyword ? `<button class="btn btn-clear" id="clear-btn">Clear</button>` : ""}
+      </div>
+    </div>`;
+
+  if (questions.length === 0) {
+    html += '<p class="empty-state">No questions found. Create one to get started!</p>';
+  } else {
+    html += questions
+      .map(
+        (q) => `
+      <article class="question-card ${q[CONFIG.API_FIELDS.SOLVED] ? "solved-card" : ""}">
+        <h3>
+          <a href="#" class="question-link" data-id="${q.id}">${q.question}</a>
+          ${q[CONFIG.API_FIELDS.SOLVED] ? `<span class="badge-solved">Solved</span>` : ""}
+        </h3>
+        ${q.keywords && q.keywords.length
+            ? `<div class="question-keywords">${q.keywords.map((k) => `<span class="keyword">${k}</span>`).join("")}</div>`
+            : ""
+          }
+        <div class="question-actions">
+          <span>
+            <button class="btn btn-play" data-id="${q.id}">Play</button>
+            <a href="#" class="read-more" data-id="${q.id}">See answer</a>
+          </span>
+          ${q.userId === currentUserId
+            ? `<span class="owner-actions">
+                  <button class="btn btn-edit" data-id="${q.id}">Edit</button>
+                  <button class="btn btn-delete" data-id="${q.id}">Delete</button>
+                </span>`
+            : ""
+          }
+        </div>
+      </article>`
+      )
+      .join("");
+  }
+
+  if (showPagination && totalPages > 1) {
+    html += `
+      <div class="pagination">
+        <button class="btn btn-page" id="prev-btn" ${page <= 1 ? "disabled" : ""}>Previous</button>
+        <span class="page-info">Page ${page} of ${totalPages}</span>
+        <button class="btn btn-page" id="next-btn" ${page >= totalPages ? "disabled" : ""}>Next</button>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+
+  document.getElementById("new-question-btn").addEventListener("click", () => showQuestionForm());
+
+  const randomBtn = document.getElementById("random-btn");
+  if (randomBtn) randomBtn.addEventListener("click", loadRandomQuestions);
+
+  const backToAllBtn = document.getElementById("back-to-all-btn");
+  if (backToAllBtn) backToAllBtn.addEventListener("click", () => loadQuestions());
+
+  document.getElementById("search-btn").addEventListener("click", () => {
+    loadQuestions(document.getElementById("keyword-input").value.trim(), 1);
+  });
+
+  document.getElementById("keyword-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loadQuestions(e.target.value.trim(), 1);
+  });
+
+  const clearBtn = document.getElementById("clear-btn");
+  if (clearBtn) clearBtn.addEventListener("click", () => loadQuestions());
+
+  const prevBtn = document.getElementById("prev-btn");
+  if (prevBtn) prevBtn.addEventListener("click", () => loadQuestions(keyword, page - 1));
+
+  const nextBtn = document.getElementById("next-btn");
+  if (nextBtn) nextBtn.addEventListener("click", () => loadQuestions(keyword, page + 1));
+
+  container.querySelectorAll(".question-link, .read-more").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      loadQuestionDetail(el.dataset.id);
+    });
+  });
+
+  container.querySelectorAll(".btn-edit").forEach((el) => {
+    el.addEventListener("click", () => showQuestionForm(el.dataset.id));
+  });
+
+  container.querySelectorAll(".btn-delete").forEach((el) => {
+    el.addEventListener("click", () => deleteQuestion(el.dataset.id));
+  });
+
+  container.querySelectorAll(".btn-play").forEach((el) => {
+    el.addEventListener("click", () => playQuestion(el.dataset.id));
+  });
+}
+
 async function loadQuestions(keyword = "", page = 1) {
   const container = document.getElementById("questions-container");
   container.innerHTML = '<p class="loading">Loading questions...</p>';
@@ -150,110 +277,14 @@ async function loadQuestions(keyword = "", page = 1) {
     if (keyword) params.set("keyword", keyword);
     const result = await apiFetch(`${CONFIG.ROUTES.QUESTIONS}?${params}`);
     const { data: questions, total, totalPages } = result;
-    const currentUserId = getCurrentUserId();
 
-    const solvedCount = questions.filter((q) => q[CONFIG.API_FIELDS.SOLVED]).length;
-
-    let html = `
-      <div class="score-bar">
-        <div class="score-item">
-          <div class="score-value">${total}</div>
-          <div class="score-label">Questions</div>
-        </div>
-        <div class="score-item">
-          <div class="score-value">${solvedCount}/${questions.length}</div>
-          <div class="score-label">Solved (this page)</div>
-        </div>
-      </div>
-      <div class="toolbar">
-        <button class="btn btn-primary" id="new-question-btn">+ New Question</button>
-        <div class="search-bar">
-          <input type="text" id="keyword-input" placeholder="Search by keyword..." value="${keyword}" />
-          <button class="btn btn-search" id="search-btn">Search</button>
-          ${keyword ? `<button class="btn btn-clear" id="clear-btn">Clear</button>` : ""}
-        </div>
-      </div>`;
-
-    if (questions.length === 0) {
-      html += '<p class="empty-state">No questions found. Create one to get started!</p>';
-    } else {
-      html += questions
-        .map(
-          (q) => `
-        <article class="question-card ${q[CONFIG.API_FIELDS.SOLVED] ? "solved-card" : ""}">
-          <h3>
-            <a href="#" class="question-link" data-id="${q.id}">${q.question}</a>
-            ${q[CONFIG.API_FIELDS.SOLVED] ? `<span class="badge-solved">Solved</span>` : ""}
-          </h3>
-          ${q.keywords && q.keywords.length
-              ? `<div class="question-keywords">${q.keywords.map((k) => `<span class="keyword">${k}</span>`).join("")}</div>`
-              : ""
-            }
-          <div class="question-actions">
-            <span>
-              <button class="btn btn-play" data-id="${q.id}">Play</button>
-              <a href="#" class="read-more" data-id="${q.id}">See answer</a>
-            </span>
-            ${q.userId === currentUserId
-              ? `<span class="owner-actions">
-                    <button class="btn btn-edit" data-id="${q.id}">Edit</button>
-                    <button class="btn btn-delete" data-id="${q.id}">Delete</button>
-                  </span>`
-              : ""
-            }
-          </div>
-        </article>`
-        )
-        .join("");
-    }
-
-    if (totalPages > 1) {
-      html += `
-        <div class="pagination">
-          <button class="btn btn-page" id="prev-btn" ${page <= 1 ? "disabled" : ""}>Previous</button>
-          <span class="page-info">Page ${page} of ${totalPages}</span>
-          <button class="btn btn-page" id="next-btn" ${page >= totalPages ? "disabled" : ""}>Next</button>
-        </div>`;
-    }
-
-    container.innerHTML = html;
-
-    document.getElementById("new-question-btn").addEventListener("click", () => showQuestionForm());
-
-    document.getElementById("search-btn").addEventListener("click", () => {
-      loadQuestions(document.getElementById("keyword-input").value.trim(), 1);
-    });
-
-    document.getElementById("keyword-input").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") loadQuestions(e.target.value.trim(), 1);
-    });
-
-    const clearBtn = document.getElementById("clear-btn");
-    if (clearBtn) clearBtn.addEventListener("click", () => loadQuestions());
-
-    const prevBtn = document.getElementById("prev-btn");
-    if (prevBtn) prevBtn.addEventListener("click", () => loadQuestions(keyword, page - 1));
-
-    const nextBtn = document.getElementById("next-btn");
-    if (nextBtn) nextBtn.addEventListener("click", () => loadQuestions(keyword, page + 1));
-
-    container.querySelectorAll(".question-link, .read-more").forEach((el) => {
-      el.addEventListener("click", (e) => {
-        e.preventDefault();
-        loadQuestionDetail(el.dataset.id);
-      });
-    });
-
-    container.querySelectorAll(".btn-edit").forEach((el) => {
-      el.addEventListener("click", () => showQuestionForm(el.dataset.id));
-    });
-
-    container.querySelectorAll(".btn-delete").forEach((el) => {
-      el.addEventListener("click", () => deleteQuestion(el.dataset.id));
-    });
-
-    container.querySelectorAll(".btn-play").forEach((el) => {
-      el.addEventListener("click", () => playQuestion(el.dataset.id));
+    displayQuestions(questions, {
+      total,
+      totalPages,
+      page,
+      keyword,
+      showPagination: true,
+      showBackToAll: false,
     });
   } catch (err) {
     if (err.message === "No token provided" || err.message === "Invalid or expired token") {
@@ -444,6 +475,28 @@ async function playQuestion(qId) {
     });
   } catch (err) {
     container.innerHTML = `<p class="error">${err.message}</p>`;
+  }
+}
+
+// Get 10 random questions
+async function loadRandomQuestions() {
+  const container = document.getElementById("questions-container");
+  container.innerHTML = '<p class="loading">Loading random questions...</p>';
+
+  try {
+    const response = await apiFetch("/api/questions/random/list?count=10");
+    const questions = response.data || response;
+
+    displayQuestions(questions, {
+      total: questions.length,
+      totalPages: 1,
+      page: 1,
+      keyword: "",
+      showPagination: false,
+      showBackToAll: true,
+    });
+  } catch (err) {
+    container.innerHTML = `<p class="error">Failed to load random questions: ${err.message}</p>`;
   }
 }
 
