@@ -160,14 +160,20 @@ async function main() {
 
   // Create a default user
   const hashedPassword = await bcrypt.hash("1234", 10);
-  const user = await prisma.user.create({
-    data: {
-      email: "admin@example.com",
-      password: hashedPassword,
-      name: "Admin User",
-      emailVerified: true
-    },
-  });
+  const user = await prisma.user.upsert({
+  where: { email: "teacher@test.com" },
+  update: {
+    emailVerified: true,
+    verificationToken: null,
+  },
+  create: {
+    email: "teacher@test.com",
+    password: hashedPassword,
+    name: "Teacher",
+    emailVerified: true,
+    verificationToken: null,
+  },
+});
 
   console.log("Created user:", user.email);
 
